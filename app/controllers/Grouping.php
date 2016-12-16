@@ -3,6 +3,10 @@
 // All the discussion stuff
 class Grouping {
 	
+	// TODO: Verify in DB somehow (maybe build DB from these)
+	const TYPE_NONE = 0;
+	const TYPE_SILO = 1;
+	
 	// Main landing function
 	static function addToGroup($f3, $forum){
 		
@@ -26,6 +30,7 @@ class Grouping {
 		
 		return $addedTo;
 	}
+	
 	
 	// Group users into silos
 	// Do not exceed maximum number
@@ -153,6 +158,7 @@ class Grouping {
 		return $subForum[0]['sfid'];
 	}
 	
+	
 	// Get the parameter list for the chosen grouping option
 	static function getparams($f3){
 		
@@ -171,6 +177,181 @@ class Grouping {
 		
 		if ( $paramList[0]["structure"] ) echo $paramList[0]["structure"];
 		else echo "null";
+	}
+	
+	
+	// First landing point in creating a discussion
+	//  choose the grouping type
+	function chooseGrouping($f3){
+		
+		// Is user admin?
+		if ( $f3->get('SESSION.type') == 0 ){
+			
+			// Find grouping types
+			$f3->set('groupingoptions', $f3->get('DB')->exec('SELECT id, name FROM groupings'));
+			
+			// Display form to create new discussion
+			echo Template::instance()->render('app/views/choosegrouping.php');
+		}
+		else {
+			$f3->reroute('/discussion');
+		}
+		
+	}
+	
+	// Define configuration page for grouping type
+	function configGrouping($f3){
+		
+		// Sanitise forum id on address bar
+		$method = $f3->get('PARAMS.method');
+		$method = $f3->scrub($method);
+		
+		switch ($method){
+			case "none":
+				echo Template::instance()->render('app/views/confignone.php');
+				break;
+			case "silo":
+				echo Template::instance()->render('app/views/configsilo.php');
+				break;
+			default:
+				// Redirect to the discussion root, not sure what else to do
+				$f3->reroute('/discussion');
+		}
+
+	}
+	
+	
+	// Define build page for each grouping type
+	function buildGrouping($f3){
+		
+		// Sanitise grouping method on address bar
+		$method = $f3->get('PARAMS.method');
+		$method = $f3->scrub($method);
+		
+		switch ($method){
+			case "none":
+				$this->buildDiscussionMeta($f3, Grouping::TYPE_NONE, null);
+				break;
+			case "silo":
+				$this->buildSiloGrouping($f3);
+				break;
+			default:
+				// Redirect to the discussion root, not sure what else to do
+				$f3->reroute('/discussion');
+		}
+	}
+	
+	
+	// Assuming everything that needs to be done with the grouping has been
+	// this function builds the discussion meta data
+	// ** Maybe move to discussion controller
+	// $groupingType = id for the type of grouping used
+	// $groupingId = id in the appropriate grouping table
+	function buildDiscussionMeta($f3, $groupingType, $groupingId){
+		
+		// Insert the forum meta data
+		// - sub forums built as needed when users visit
+		$f3->get('DB')->exec('
+			INSERT INTO `forum_meta`
+				(`grouptype`, `typeid`, `title`, `prompt`)
+			VALUES
+				(:grouptype, :type, :title, :prompt)',
+			array( 
+				':grouptype'=>$groupingType,
+				':type'=>$groupingId,
+				':title'=>$f3->get('POST.title'),
+				':prompt'=>$f3->get('POST.prompt')
+			)
+		);
+		
+		// Redirect to the discussion root
+		$f3->reroute('/discussion');
+	}
+	
+	
+	// Fill grouping config table from form data
+	//  Requires correct JSON structure set in grouping table
+	//  Replaced by individual function - in case they need to do something fancy
+	function groupingParamPump($f3, $groupingName){
+		
+		// Retrieve grouping type id
+		$grouping = $f3->get('DB')->exec('
+			SELECT id, structure
+			FROM `groupings`
+			WHERE
+				`name`=:option',
+			array( ':option'=> $groupingName)
+		);
+	
+		// TODO: re-route on error (no option found)
+
+		// Processing parameters (if any)
+		$groupingId = null;
+		if ( $grouping[0]["structure"] ){
+		
+			// Process parameter list for SQL query elements
+			$j = json_decode( $grouping[0]["structure"] );
+			$pString = "";
+			$pString = "";
+			$vList = [];
+			for ($i=0; $i<count($j->params); $i++){
+				
+				$pString = $pString."`".$j->params[$i]->name."`";
+				$vString = $vString."?";
+				
+				//$vList[$j->params[$i]->name] = $f3->get('POST.'.$j->params[$i]->name);
+				array_push( $vList, $f3->get('POST.'.$j->params[$i]->name) );
+				
+				if ($i<count($j->params)-1) {
+					$pString = $pString.", ";
+					$vString = $vString.", ";
+				}
+			}
+			
+			// Create an entry in grouping table for this forum
+			//  $groupingName chooses table for this grouping's params
+			//  $pString is the list of parameters separated by commas
+			//  $vString is a series of question marks - one for each parameter
+			//  $vList is an array of parameters - to substitue the question marks
+			$f3->get('DB')->exec('
+				INSERT INTO `grouping_'.$groupingName.'`
+					('.$pString.')
+				VALUES
+					('.$vString.')',
+				$vList
+			);
+
+			
+			// Find last inserted id
+			$result = $f3->get('DB')->exec('SELECT LAST_INSERT_ID()');
+			$groupingId = $result[0]['LAST_INSERT_ID()'];
+		}
+		
+		// Build meta data entry
+		$this->buildDiscussionMeta($f3, $grouping[0]["id"], $groupingId);
+	}
+	
+	
+	// Specific data configuration for silo grouping type
+	function buildSiloGrouping($f3){
+		
+		$f3->get('DB')->exec('
+			INSERT INTO `grouping_silo`
+				(`min`, `max`)
+			VALUES
+				(:min, :max)',
+			array( 
+				':min'=>$f3->get('POST.min'),
+				':max'=>$f3->get('POST.max')
+			)
+		);
+
+		// Find last inserted id
+		$result = $f3->get('DB')->exec('SELECT LAST_INSERT_ID()');
+		$groupingId = $result[0]['LAST_INSERT_ID()'];
+		
+		// Build meta data entry
+		$this->buildDiscussionMeta($f3, Grouping::TYPE_SILO, $groupingId);
 	}
 	
 }

@@ -3,6 +3,7 @@
 // All the discussion stuff
 class Discussions {
 	
+	
 	// List the discussions to allow access
 	function listall($f3){
 		
@@ -88,6 +89,7 @@ class Discussions {
 		
 	}
 	
+	
 	// Find all posts for chosen sub-forum and pass to view
 	function displaysubforum($f3, $index, $prompt){
 		
@@ -112,6 +114,7 @@ class Discussions {
 		// Render the discussion list template
 		echo Template::instance()->render('app/views/forumview.php');
 	}
+	
 	
 	// Process reply submission
 	// All input sanitised by F3 and PDO database calls
@@ -156,106 +159,7 @@ class Discussions {
 		// Re-route back to discussion view
 		$f3->reroute('/discussion/'.$fid);
 	}
-	
-	// Request to create new discussion
-	function definenew ($f3){
-		
-		// Is user admin?
-		if ( $f3->get('SESSION.type') == 0 ){
-			
-			// Find grouping types
-			$f3->set('groupingoptions', $f3->get('DB')->exec('SELECT id, name FROM groupings'));
-			
-			// Display form to create new discussion
-			echo Template::instance()->render('app/views/discussionnew.php');
-		}
-		else {
-			$f3->reroute('/discussion');
-		}
-	}
-	
-	// Submission of the new discussion form
-	function submitnew ($f3){
-		
-		// Is user admin?
-		if ( $f3->get('SESSION.type') == 0 ){
-		
-			// TODO: Sanitise everything
-			$groupingName = $f3->get('POST.grouping');
-		
-			// Retrieve grouping type id
-			$grouping = $f3->get('DB')->exec('
-				SELECT id, structure
-				FROM `groupings`
-				WHERE
-					`name`=:option',
-				array( ':option'=> $groupingName)
-			);
-		
-			// TODO: re-route on error (no option found)
 
-			// Processing parameters (if any)
-			$groupingId = 0;
-			if ( $grouping[0]["structure"] ){
-			
-				// Process parameter list for SQL query elements
-				$j = json_decode( $grouping[0]["structure"] );
-				$pString = "";
-				$pString = "";
-				$vList = [];
-				for ($i=0; $i<count($j->params); $i++){
-					
-					$pString = $pString."`".$j->params[$i]->name."`";
-					$vString = $vString."?";
-					
-					//$vList[$j->params[$i]->name] = $f3->get('POST.'.$j->params[$i]->name);
-					array_push( $vList, $f3->get('POST.'.$j->params[$i]->name) );
-					
-					if ($i<count($j->params)-1) {
-						$pString = $pString.", ";
-						$vString = $vString.", ";
-					}
-				}
-				
-				// Create an entry in grouping table for this forum
-				//  $groupingName chooses table for this grouping's params
-				//  $pString is the list of parameters separated by commas
-				//  $vString is a series of question marks - one for each parameter
-				//  $vList is an array of parameters - to substitue the question marks
-				$f3->get('DB')->exec('
-					INSERT INTO `grouping_'.$groupingName.'`
-						('.$pString.')
-					VALUES
-						('.$vString.')',
-					$vList
-				);
-
-				
-				// Find last inserted id
-				$result = $f3->get('DB')->exec('SELECT LAST_INSERT_ID()');
-				$groupingId = $result[0]['LAST_INSERT_ID()'];
-			}
-
-			// Insert the forum meta data
-			// - sub forums built as needed when users visit
-			$f3->get('DB')->exec('
-				INSERT INTO `forum_meta`
-					(`grouptype`, `typeid`, `title`, `prompt`)
-				VALUES
-					(:grouptype, :type, :title, :prompt)',
-				array( 
-					':grouptype'=>$grouping[0]["id"],
-					':type'=>$groupingId,
-					':title'=>$f3->get('POST.title'),
-					':prompt'=>$f3->get('POST.prompt')
-				)
-			);			
-
-		}
-		
-		// Either way, redirect to the discussion root
-		$f3->reroute('/discussion');
-	}
 }
 	
 ?>

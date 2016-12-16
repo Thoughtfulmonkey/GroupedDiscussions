@@ -45,11 +45,15 @@ $f3->route('GET /discussion', 'Discussions->listall');				// Discussion root
 $f3->route('GET /discussion/@fid', 'Discussions->land');			// Display a discussion
 $f3->route('POST /discussion/@fid', 'Discussions->addreply');		// add a reply to a post
 
-$f3->route('GET /discussion/new', 'Discussions->definenew');		// Define a new discussion
-$f3->route('POST /discussion/new', 'Discussions->submitnew');		// Build a new discussion in the DB
+$f3->route('GET /discussion/new', 'Grouping->chooseGrouping');		// Define a new discussion
 
 // Internal API calls
-$f3->route('GET /grouping/params/@option', 'Grouping->getparams');	// Retrieve parameter list for grouping option
+//$f3->route('GET /grouping/params/@option', 'Grouping->getparams');// Retrieve parameter list for grouping option
+$f3->route('GET /wordcloud/@fid', 'Words->buildCloud');				// Build a word cloud for the chosen discussion forum
+
+// Grouping
+$f3->route('POST /config_grouping/@method', 'Grouping->configGrouping');	// Unique pages to configure each grouping type
+$f3->route('POST /build_grouping/@method', 'Grouping->buildGrouping');		// Unique pages to build each grouping type
 
 // Dev calls
 // TODO: remove before shipping

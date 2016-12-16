@@ -42,17 +42,10 @@
 
 	<div id="form_panel">
 	
-		<h2>New Discussion</h2>
+		<h2>Choose a Grouping Method</h2>
 		
 		<form id="new_form" method='post' action='<?php echo $APPROOT; ?>/config_grouping/<?php echo $groupingoptions['0']['name']; ?>'>
 			
-			<label for="title">Title:</label>
-			<input name="title" type="text"><br><br>
-			
-			<label for="prompt">Prompt:</label><br>
-			<textarea name="prompt"></textarea><br>
-			
-			<label for="grouping">Grouping:</label><br>
 			<?php foreach (($groupingoptions?:array()) as $grouping): ?>
 				<input class="group_option" type="radio" name="grouping" value="<?php echo $grouping['name']; ?>"><?php echo $grouping['name']; ?><br>
 			<?php endforeach; ?>

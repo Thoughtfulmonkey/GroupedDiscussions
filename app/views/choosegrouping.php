@@ -42,17 +42,10 @@
 
 	<div id="form_panel">
 	
-		<h2>New Discussion</h2>
+		<h2>Choose a Grouping Method</h2>
 		
 		<form id="new_form" method='post' action='{{ @APPROOT }}/config_grouping/{{ @groupingoptions[0].name }}'>
 			
-			<label for="title">Title:</label>
-			<input name="title" type="text"><br><br>
-			
-			<label for="prompt">Prompt:</label><br>
-			<textarea name="prompt"></textarea><br>
-			
-			<label for="grouping">Grouping:</label><br>
 			<repeat group="{{ @groupingoptions }}" value="{{ @grouping }}">
 				<input class="group_option" type="radio" name="grouping" value="{{ @grouping.name }}">{{ @grouping.name }}<br>
 			</repeat>
