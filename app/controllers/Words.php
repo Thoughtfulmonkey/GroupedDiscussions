@@ -5,7 +5,7 @@ class Words{
 	const MIN_SIZE = 4;
 	const MIN_COUNT = 3;
 	
-	//https://en.wikipedia.org/wiki/Most_common_words_in_English (top 40 included)
+	//https://en.wikipedia.org/wiki/Most_common_words_in_English (top 50 included)
 	private $common = ["the", "be", "to", "of", "and", "a", "in", "that", "have", "i", "it", "for", "not", "on", "with", "he", "as", "you", "do", "at", "this", "but", "his", "by", "from", "they", "we", "say", "her", "she", "or", "an", "will", "my", "one", "all", "would", "there", "their", "what"];
 	
 	//

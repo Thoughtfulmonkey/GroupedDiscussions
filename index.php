@@ -44,6 +44,8 @@ $f3->route('GET /logout', 'MyAuth->logout');		// Log the user out
 $f3->route('GET /discussion', 'Discussions->listall');				// Discussion root 
 $f3->route('GET /discussion/@fid', 'Discussions->land');			// Display a discussion
 $f3->route('POST /discussion/@fid', 'Discussions->addreply');		// add a reply to a post
+$f3->route('GET /discussion/@fid/@sfid', 'Discussions->subForumDirect'); 		// Directly access a sub-forum (admin only at this point)
+$f3->route('POST /discussion/@fid/@sfid', 'Discussions->subForumPostDirect'); 	// Directly post to a sub-forum (admin only at this point)
 
 $f3->route('GET /discussion/new', 'Grouping->chooseGrouping');		// Define a new discussion
 
@@ -54,6 +56,9 @@ $f3->route('GET /wordcloud/@fid', 'Words->buildCloud');				// Build a word cloud
 // Grouping
 $f3->route('POST /config_grouping/@method', 'Grouping->configGrouping');	// Unique pages to configure each grouping type
 $f3->route('POST /build_grouping/@method', 'Grouping->buildGrouping');		// Unique pages to build each grouping type
+
+// Peeking
+$f3->route('GET /peek/@fid/@direction', 'Discussions->peek');			// Peek at an adjacent discussion
 
 // Dev calls
 // TODO: remove before shipping

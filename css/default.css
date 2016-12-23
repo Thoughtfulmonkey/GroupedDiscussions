@@ -3,6 +3,7 @@
 body{
 	font-family: Open Sans; 
 	font-size: 18px;
+	background-color: #FFF;
 }
 
 #header{
@@ -142,9 +143,74 @@ form input:hover{
 	
 }
 
+.peek_tab{
+	position: absolute;
+	bottom: 20px;
+	width: 60px;
+	height: 80px;
+	background-color: #DDD7;
+	line-height: 80px;
+	text-align: center;
+	font-size: 35px;
+}
+.peek_tab:hover{
+	background-color: #EEE;
+}
+
+#peek_left_tab{
+	left: 0;
+	border-radius: 0 10px 10px 0;
+}
+
+#peek_right_tab{
+	right: 0;
+	border-radius: 10px 0 0 10px;
+}
+
+#peek_overlay{
+	width: 600px;
+	height: 100vh;
+	border: 2px solid #BBB;
+	position: fixed;
+	top:0;
+	display:none;
+}
+
+#peek_overlay iframe{
+	width: 600px;
+	height: 100%;
+}
+
+.peek_left{
+	left: 0;
+}
+
+.peek_right{
+	right: 0;
+}
+
+#peek_heading{
+	background-color: #422;
+	color: #fff;
+	padding: 5px;
+	overflow: auto;
+}
+
 /* Admin UI */
 #param_panel{
 	border: 1px solid #DDD;
 	margin-top: 10px;
 	padding: 10px;
+}
+
+.data_table{
+	width: 400px;
+	margin: 0 auto;
+	border-collapse: collapse;
+}
+.data_table td, th{
+	padding: 4px;
+	text-align: center;
+	width: 50%;
+	border: 1px solid #ddd;
 }
