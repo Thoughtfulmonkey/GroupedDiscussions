@@ -25,19 +25,42 @@
 	
 	<div id="form_panel">
 	
-		<h2>New Discussion</h2>
+		<h2>
+			<check if="{{ @mode=='edit' }}">
+				<true>Edit Discussion</true>
+				<false>New Discussion</false>
+			</check>
+		</h2>
 		
-		<form id="new_form" method='post' action='{{ @APPROOT }}/build_grouping/silo'>
+		<form id="new_form" method='post' 
+			<check if="{{ @mode=='edit' }}">
+				<true> action='{{ @APPROOT }}/discussion/update/{{ @forumData[0].fid }}' </true>
+				<false>	action='{{ @APPROOT }}/build_grouping/silo' </false>
+			</check>
+		>
 			
 			<include href="app/views/discussionformcommon.php" />
 			
+			<input type="hidden" name="grouping" value="silo">
+			
 			<label for="min">Minimum group size</label>
-			<input name="min" type="text"><br><br>
+			<input name="min" type="text" 
+				<check if="{{ @mode=='edit' }}">
+					<true> value="{{ @groupingData[0].min }}" </true>
+				</check>
+			><br><br>
 			
 			<label for="max">Maximum group size</label>
-			<input name="max" type="text"><br><br>
+			<input name="max" type="text" 
+				<check if="{{ @mode=='edit' }}">
+					<true> value="{{ @groupingData[0].max }}" </true>
+				</check>
+			><br><br>
 			
-			<br><input type="submit" value="Create">
+			<check if="{{ @mode=='edit' }}">
+				<true> <br><input type="submit" value="Update"> </true>
+				<false>	<br><input type="submit" value="Create"> </false>
+			</check>
 		
 		</form>
 	

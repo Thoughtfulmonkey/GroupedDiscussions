@@ -25,13 +25,28 @@
 	
 	<div id="form_panel">
 	
-		<h2>New Discussion</h2>
+		<h2>
+			<?php if ($mode=='edit'): ?>
+				Edit Discussion
+				<?php else: ?>New Discussion
+			<?php endif; ?>
+		</h2>
 		
-		<form id="new_form" method='post' action='<?php echo $APPROOT; ?>/build_grouping/none'>
+		<form id="new_form" method='post' 
+			<?php if ($mode=='edit'): ?>
+				 action='<?php echo $APPROOT; ?>/discussion/update/<?php echo $forumData['0']['fid']; ?>' 
+				<?php else: ?>	action='<?php echo $APPROOT; ?>/build_grouping/silo' 
+			<?php endif; ?>
+		>
 			
 			<?php echo $this->render('app/views/discussionformcommon.php',$this->mime,get_defined_vars(),0); ?>
 			
-			<br><input type="submit" value="Create">
+			<br>
+			
+			<?php if ($mode=='edit'): ?>
+				 <br><input type="submit" value="Update"> 
+				<?php else: ?>	<br><input type="submit" value="Create"> 
+			<?php endif; ?>
 		
 		</form>
 	

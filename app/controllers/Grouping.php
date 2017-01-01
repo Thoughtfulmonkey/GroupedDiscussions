@@ -206,6 +206,9 @@ class Grouping {
 		$method = $f3->get('PARAMS.method');
 		$method = $f3->scrub($method);
 		
+		// Set creation flag
+		$f3->set('mode', 'create');
+		
 		switch ($method){
 			case "none":
 				echo Template::instance()->render('app/views/confignone.php');
@@ -249,23 +252,145 @@ class Grouping {
 	// $groupingId = id in the appropriate grouping table
 	function buildDiscussionMeta($f3, $groupingType, $groupingId){
 		
+		// Peeking switch
+		$allowPeeking = false;
+		if ( $f3->get('POST.peeking')=="allow" ) $allowPeeking = true;
+		
 		// Insert the forum meta data
 		// - sub forums built as needed when users visit
 		$f3->get('DB')->exec('
 			INSERT INTO `forum_meta`
-				(`grouptype`, `typeid`, `title`, `prompt`)
+				(`grouptype`, `typeid`, `title`, `prompt`, `allow_peeking`)
 			VALUES
-				(:grouptype, :type, :title, :prompt)',
+				(:grouptype, :type, :title, :prompt, :peeking)',
 			array( 
 				':grouptype'=>$groupingType,
 				':type'=>$groupingId,
 				':title'=>$f3->get('POST.title'),
-				':prompt'=>$f3->get('POST.prompt')
+				':prompt'=>$f3->get('POST.prompt'),
+				':peeking'=>$allowPeeking
 			)
 		);
 		
 		// Redirect to the discussion root
 		$f3->reroute('/discussion');
+	}
+	
+	
+	// Edit a discussion definition
+	// - cannot change grouping type
+	function edit($f3){
+		
+		// Sanitise forum id
+		$fid = $f3->get('PARAMS.fid');
+		$fid = $f3->scrub($fid);
+		
+		// Pull the forum details
+		// - could be twice in a row. Any more efficient way?
+		$f3->set('forumData', $f3->get('DB')->exec('
+			SELECT `fid`, `grouptype`, `typeid`, `title`, `prompt`, `allow_peeking`, `name`
+			FROM `forum_meta`
+				JOIN `groupings` ON `forum_meta`.`grouptype` = `groupings`.`id`
+			WHERE `fid`=:fid',
+			array( 
+				':fid'=>$fid
+			)
+		));
+		
+		// Set editing flag
+		$f3->set('mode', 'edit');
+		
+		// Is there a grouping option?
+		if ( $f3->get('forumData')[0]['name'] == "none" ){
+			echo Template::instance()->render('app/views/confignone.php');
+		} else {
+			
+			// Load the grouping config
+			$f3->set('groupingData', $f3->get('DB')->exec('
+				SELECT *
+				FROM `grouping_'.$f3->get('forumData')[0]['name'].'`
+				WHERE `id`=:typeid',
+				array( 
+					':typeid'=>$f3->get('forumData')[0]['typeid']
+				)
+			));
+			
+			// Stick with set grouping method
+			switch ( $f3->get('forumData')[0]['name'] ){
+				case "silo":
+					echo Template::instance()->render('app/views/configsilo.php');
+					break;
+				default:
+					// Redirect to the discussion root, not sure what else to do
+					// - should probably be error (but shouldn't reach this)
+					$f3->reroute('/discussion');
+			}
+		}
+		
+	}
+	
+	
+	// Updating details about a discussion
+	function update ($f3){
+		
+		// Sanitise forum id
+		$fid = $f3->get('PARAMS.fid');
+		$fid = $f3->scrub($fid);
+		
+		// TODO: verify admin?
+		//  should probably do something in index.php with admin only routing
+		
+		// Update the meta data
+		$f3->get('DB')->exec('
+			UPDATE `forum_meta`
+			SET `title`=:title
+			WHERE `fid`=:fid',
+			array( 
+				':title'=>$f3->get('POST.title'),
+				':fid'=>$fid,
+			)
+		);
+		$f3->get('DB')->exec('
+			UPDATE `forum_meta`
+			SET `prompt`=:prompt
+			WHERE `fid`=:fid',
+			array( 
+				':prompt'=>$f3->get('POST.prompt'),
+				':fid'=>$fid,
+			)
+		);
+		// Peeking switch
+		$allowPeeking = false;
+		if ( $f3->get('POST.peeking')=="allow" ) $allowPeeking = true;
+		$f3->get('DB')->exec('
+			UPDATE `forum_meta`
+			SET `allow_peeking`=:peeking
+			WHERE `fid`=:fid',
+			array( 
+				':peeking'=>$allowPeeking,
+				':fid'=>$fid,
+			)
+		);
+		
+		
+		// Grouping specific update
+		// Is there a grouping option?
+		if ( null !== $f3->get('POST.grouping') ){
+			
+			// Stick with set grouping method
+			switch( $f3->get('POST.grouping') ){
+				case "silo":
+					$this->updateSiloGrouping($f3, $fid);
+					break;
+				default:
+					// Redirect to the discussion root, not sure what else to do
+					// - should probably be error (but shouldn't reach this)
+					$f3->reroute('/discussion');
+			}
+		}
+		
+		// Reroute to discussion listing
+		$f3->reroute('/discussion/'.$fid);
 	}
 	
 	
@@ -352,6 +477,32 @@ class Grouping {
 		
 		// Build meta data entry
 		$this->buildDiscussionMeta($f3, Grouping::TYPE_SILO, $groupingId);
+	}
+	
+	// Update for silo grouping
+	function updateSiloGrouping($f3, $fid){
+		
+		$f3->get('DB')->exec('
+			UPDATE `grouping_silo`
+				JOIN `forum_meta` ON `forum_meta`.`typeid` = `grouping_silo`.`id`
+			SET `min`=:min
+			WHERE `fid`=:fid',
+			array( 
+				':min'=>$f3->get('POST.min'),
+				':fid'=>$fid,
+			)
+		);
+		$f3->get('DB')->exec('
+			UPDATE `grouping_silo`
+				JOIN `forum_meta` ON `forum_meta`.`typeid` = `grouping_silo`.`id`
+			SET `max`=:max
+			WHERE `fid`=:fid',
+			array( 
+				':max'=>$f3->get('POST.max'),
+				':fid'=>$fid,
+			)
+		);		
+		
 	}
 	
 }

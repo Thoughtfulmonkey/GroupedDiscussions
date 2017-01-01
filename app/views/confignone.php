@@ -25,13 +25,28 @@
 	
 	<div id="form_panel">
 	
-		<h2>New Discussion</h2>
+		<h2>
+			<check if="{{ @mode=='edit' }}">
+				<true>Edit Discussion</true>
+				<false>New Discussion</false>
+			</check>
+		</h2>
 		
-		<form id="new_form" method='post' action='{{ @APPROOT }}/build_grouping/none'>
+		<form id="new_form" method='post' 
+			<check if="{{ @mode=='edit' }}">
+				<true> action='{{ @APPROOT }}/discussion/update/{{ @forumData[0].fid }}' </true>
+				<false>	action='{{ @APPROOT }}/build_grouping/silo' </false>
+			</check>
+		>
 			
 			<include href="app/views/discussionformcommon.php" />
 			
-			<br><input type="submit" value="Create">
+			<br>
+			
+			<check if="{{ @mode=='edit' }}">
+				<true> <br><input type="submit" value="Update"> </true>
+				<false>	<br><input type="submit" value="Create"> </false>
+			</check>
 		
 		</form>
 	

@@ -48,6 +48,8 @@ $f3->route('GET /discussion/@fid/@sfid', 'Discussions->subForumDirect'); 		// Di
 $f3->route('POST /discussion/@fid/@sfid', 'Discussions->subForumPostDirect'); 	// Directly post to a sub-forum (admin only at this point)
 
 $f3->route('GET /discussion/new', 'Grouping->chooseGrouping');		// Define a new discussion
+$f3->route('GET /discussion/edit/@fid', 'Grouping->edit');			// Edit discussion details
+$f3->route('POST /discussion/update/@fid', 'Grouping->update');		// Updating discussion details
 
 // Internal API calls
 //$f3->route('GET /grouping/params/@option', 'Grouping->getparams');// Retrieve parameter list for grouping option

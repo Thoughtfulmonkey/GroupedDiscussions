@@ -15,6 +15,7 @@
 	<?php echo $this->render('app/views/header.php',$this->mime,get_defined_vars(),0); ?>
 
 	<div id="discussion_listing">
+		<div id="edit_link"><a href="<?php echo $APPROOT; ?>/discussion/edit/<?php echo $forumData['0']['fid']; ?>">Edit</a></div>
 		<h1><?php echo $forumData['0']['title']; ?></h1>
 		<p><?php echo $this->raw($forumData['0']['prompt']); ?></p>
 		

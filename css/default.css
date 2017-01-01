@@ -214,3 +214,8 @@ form input:hover{
 	width: 50%;
 	border: 1px solid #ddd;
 }
+
+#edit_link{
+	text-align: right;
+	margin-top: 0;
+}

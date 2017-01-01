@@ -15,6 +15,7 @@
 	<include href="app/views/header.php" />
 
 	<div id="discussion_listing">
+		<div id="edit_link"><a href="{{ @APPROOT }}/discussion/edit/{{ @forumData[0].fid }}">Edit</a></div>
 		<h1>{{ @forumData[0].title }}</h1>
 		<p>{{ @forumData[0].prompt | raw }}</p>
 		

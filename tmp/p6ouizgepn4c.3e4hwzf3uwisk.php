@@ -25,19 +25,42 @@
 	
 	<div id="form_panel">
 	
-		<h2>New Discussion</h2>
+		<h2>
+			<?php if ($mode=='edit'): ?>
+				Edit Discussion
+				<?php else: ?>New Discussion
+			<?php endif; ?>
+		</h2>
 		
-		<form id="new_form" method='post' action='<?php echo $APPROOT; ?>/build_grouping/silo'>
+		<form id="new_form" method='post' 
+			<?php if ($mode=='edit'): ?>
+				 action='<?php echo $APPROOT; ?>/discussion/update/<?php echo $forumData['0']['fid']; ?>' 
+				<?php else: ?>	action='<?php echo $APPROOT; ?>/build_grouping/silo' 
+			<?php endif; ?>
+		>
 			
 			<?php echo $this->render('app/views/discussionformcommon.php',$this->mime,get_defined_vars(),0); ?>
 			
+			<input type="hidden" name="grouping" value="silo">
+			
 			<label for="min">Minimum group size</label>
-			<input name="min" type="text"><br><br>
+			<input name="min" type="text" 
+				<?php if ($mode=='edit'): ?>
+					 value="<?php echo $groupingData['0']['min']; ?>" 
+				<?php endif; ?>
+			><br><br>
 			
 			<label for="max">Maximum group size</label>
-			<input name="max" type="text"><br><br>
+			<input name="max" type="text" 
+				<?php if ($mode=='edit'): ?>
+					 value="<?php echo $groupingData['0']['max']; ?>" 
+				<?php endif; ?>
+			><br><br>
 			
-			<br><input type="submit" value="Create">
+			<?php if ($mode=='edit'): ?>
+				 <br><input type="submit" value="Update"> 
+				<?php else: ?>	<br><input type="submit" value="Create"> 
+			<?php endif; ?>
 		
 		</form>
 	
