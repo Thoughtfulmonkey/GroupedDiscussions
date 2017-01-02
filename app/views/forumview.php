@@ -8,7 +8,7 @@
 	<script>
 	
 		var peekState = 0;
-	
+
 		function addTinyMCE( ref ){
 			
 			// Remove any other text areas
@@ -30,15 +30,17 @@
 			});
 		}
 		
-		// Load an adjacent forum
-		function peeking( direction ){
-			
-			$('#peek_overlay').empty();
-			$('#peek_overlay').removeClass();
-			$('#peek_overlay').addClass('peek_'+direction);
-			$('#peek_overlay').append('<iframe src="http://localhost/disc/peek/{{ @fid }}/'+direction+'"></iframe>');
-			$('#peek_overlay').show();
-		}
+		<check if="{{ (@forum_meta.allow_peeking) && (@SESSION.type!=0) }}"><true>
+			// Load an adjacent forum
+			function peeking( direction ){
+				
+				$('#peek_overlay').empty();
+				$('#peek_overlay').removeClass();
+				$('#peek_overlay').addClass('peek_'+direction);
+				$('#peek_overlay').append('<iframe src="http://localhost/disc/peek/{{ @fid }}/'+direction+'"></iframe>');
+				$('#peek_overlay').show();
+			}
+		</true></check>
 	
 		// Document loads
 		$(document).ready(function(){
@@ -74,39 +76,41 @@
 				addTinyMCE( this );
 			});
 			
-			// Peeking click
-			$('#peek_left_tab').click( function(){ 
-			
-				if (peekState == -1){
-					$('#peek_left_tab').css("left", "0px");
-					$('#peek_overlay').empty();
-					$('#peek_overlay').removeClass();
-					$('#peek_overlay').hide();
-					peekState = 0;
-				}
-				else{
-					peeking("left");
-					$('#peek_left_tab').css("left", "605px");
-					if (peekState == 1) $('#peek_right_tab').css("right", "0px");
-					peekState = -1;
-				}
+			<check if="{{ (@forum_meta.allow_peeking) && (@SESSION.type!=0) }}"><true>
+				// Peeking click
+				$('#peek_left_tab').click( function(){ 
 				
-			});
-			$('#peek_right_tab').click( function(){ 
-				if (peekState == 1){
-					$('#peek_right_tab').css("right", "0px");
-					$('#peek_overlay').empty();
-					$('#peek_overlay').removeClass();
-					$('#peek_overlay').hide();
-					peekState = 0;
-				}
-				else{
-					peeking("right");
-					$('#peek_right_tab').css("right", "605px");
-					if (peekState == -1) $('#peek_left_tab').css("left", "0px");
-					peekState = 1;
-				} 
-			});
+					if (peekState == -1){
+						$('#peek_left_tab').css("left", "0px");
+						$('#peek_overlay').empty();
+						$('#peek_overlay').removeClass();
+						$('#peek_overlay').hide();
+						peekState = 0;
+					}
+					else{
+						peeking("left");
+						$('#peek_left_tab').css("left", "605px");
+						if (peekState == 1) $('#peek_right_tab').css("right", "0px");
+						peekState = -1;
+					}
+					
+				});
+				$('#peek_right_tab').click( function(){ 
+					if (peekState == 1){
+						$('#peek_right_tab').css("right", "0px");
+						$('#peek_overlay').empty();
+						$('#peek_overlay').removeClass();
+						$('#peek_overlay').hide();
+						peekState = 0;
+					}
+					else{
+						peeking("right");
+						$('#peek_right_tab').css("right", "605px");
+						if (peekState == -1) $('#peek_left_tab').css("left", "0px");
+						peekState = 1;
+					} 
+				});
+			</true></check>
 			
 			
 		});
@@ -119,11 +123,13 @@
 
 	<include href="app/views/header.php" />
 
-	<div id="peek_overlay">
-	</div>
+	<check if="{{ (@forum_meta.allow_peeking) && (@SESSION.type!=0) }}"><true>
+		<div id="peek_overlay">
+		</div>
+	</true></check>
 	
 	<div id="root_post">
-		<div id="root_prompt">{{ @prompt | raw }}</div>
+		<div id="root_prompt">{{ @forum_meta.prompt | raw }}</div>
 		<div id="rpy_x" class="root_button">Post</div>
 	</div>
 
@@ -146,8 +152,10 @@
 		
 	</div>
 	
-	<div id="peek_left_tab" class="peek_tab">&lt;&lt;</div>
-	<div id="peek_right_tab" class="peek_tab">&gt;&gt;</div>
+	<check if="{{ (@forum_meta.allow_peeking) && (@SESSION.type!=0) }}"><true>
+		<div id="peek_left_tab" class="peek_tab">&lt;&lt;</div>
+		<div id="peek_right_tab" class="peek_tab">&gt;&gt;</div>
+	</true></check>
 	
 	
 	

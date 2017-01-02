@@ -100,20 +100,21 @@ class Discussions {
 			array( ':fid'=>$f3->get('PARAMS.fid'), ':uid'=>$f3->get('SESSION.uid') )
 		));
 		
-		// Retrieve the forum prompt
+		// Retrieve the forum prompt and peek setting
 		$forum = $f3->get('DB')->exec('
-			SELECT `prompt` 
+			SELECT `prompt`, `allow_peeking` 
 			FROM `forum_meta`  
 			WHERE 
 				`fid` = :fid ',
 			array( ':fid'=>$f3->get('PARAMS.fid') )
 		);
+		$f3->set('forum_meta', $forum[0]);
 		
 		// Yes, they are a member of this forum already  - slightly weird to set subindex (maybe confused at the time)
 		if ( count($f3->get('subindex')) == 1 ){
 			
 			// Display the sub-forum
-			$this->displaysubforum( $f3, $f3->get('subindex')[0]["sfid"], $forum[0]["prompt"], false);
+			$this->displaysubforum( $f3, $f3->get('subindex')[0]["sfid"], false);
 		}
 		else if ( count($f3->get('subindex')) == 0 ){
 				
@@ -131,7 +132,7 @@ class Discussions {
 			$addedTo = Grouping::addToGroup($f3, $forum);
 			
 			// Display the sub-forum
-			$this->displaysubforum($f3, $addedTo, $forum[0]["prompt"], false);
+			$this->displaysubforum($f3, $addedTo, false);
 		}
 		else {
 
@@ -143,7 +144,7 @@ class Discussions {
 	}
 	
 	// Find all posts for chosen sub-forum and pass to view
-	function displaysubforum($f3, $index, $prompt, $peek){
+	function displaysubforum($f3, $index, $peek){
 		
 		// Sanitise forum id on address bar
 		$fid = $f3->get('PARAMS.fid');
@@ -161,7 +162,6 @@ class Discussions {
 			array( ':sfid'=>$index )
 		));
 		
-		$f3->set('prompt', $prompt);
 		$f3->set('fid', $fid);
 		
 		// Render the discussion list template
@@ -279,7 +279,7 @@ class Discussions {
 			// Use first sfid returned. Should be adjacent if there is one, or wrap around if there isn't
 			// Now to pull all of the discussions
 			// TODO: forum may have different prompt. If so, need to pass
-			$this->displaysubforum($f3, $peekId, "", true);
+			$this->displaysubforum($f3, $peekId, true);
 
 		}
 		else {
@@ -298,10 +298,20 @@ class Discussions {
 			$fid = $f3->get('PARAMS.fid');
 			$fid = $f3->scrub($fid);
 			
-			// Sanitise forum id on address bar
+			// Sanitise sub-forum id on address bar
 			$sfid = $f3->get('PARAMS.sfid');
 			$sfid = $f3->scrub($sfid);
 
+			// Retrieve the forum prompt and peek setting
+			$forum = $f3->get('DB')->exec('
+				SELECT `prompt`, `allow_peeking` 
+				FROM `forum_meta`  
+				WHERE 
+					`fid` = :fid ',
+				array( ':fid'=>$f3->get('PARAMS.fid') )
+			);
+			$f3->set('forum_meta', $forum[0]);
+			
 			$this->displaysubforum($f3, $sfid, "", false);
 		}
 		else {

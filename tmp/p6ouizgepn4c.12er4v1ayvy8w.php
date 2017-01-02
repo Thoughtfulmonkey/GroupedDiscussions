@@ -52,7 +52,6 @@
 						<p><?php echo $this->raw($post['content']); ?></p>
 					</div>
 					<div class="post_footer">
-						<div class="reply_button" id="rpy_<?php echo $post['pid']; ?>">Reply</div>
 					</div>
 				</div>
 			<?php endforeach; ?>

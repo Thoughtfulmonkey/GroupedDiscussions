@@ -52,7 +52,6 @@
 						<p>{{ @post.content | raw }}</p>
 					</div>
 					<div class="post_footer">
-						<div class="reply_button" id="rpy_{{ @post.pid }}">Reply</div>
 					</div>
 				</div>
 			</repeat>
