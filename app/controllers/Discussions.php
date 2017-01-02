@@ -102,7 +102,7 @@ class Discussions {
 		
 		// Retrieve the forum prompt and peek setting
 		$forum = $f3->get('DB')->exec('
-			SELECT `prompt`, `allow_peeking` 
+			SELECT `fid`, `prompt`, `allow_peeking` 
 			FROM `forum_meta`  
 			WHERE 
 				`fid` = :fid ',
@@ -288,6 +288,59 @@ class Discussions {
 	}
 	
 	
+	// Share a post amongst sibling sub-forums
+	function promote($f3){
+		
+		// Admin user?
+		if ( $f3->get('SESSION.type') == 0 ){
+			
+			// TODO: What if no post fields
+
+			// Find the sub-forum ids
+			$subForums = $f3->get('DB')->exec('
+				SELECT `sfid`
+				FROM `sub_forum`
+				WHERE `fid` = :fid',
+				array( 
+					':fid'=>$f3->get('POST.forum') 
+				)
+			);
+			
+			// Find the sub-forum the post is in
+			$postForum = $f3->get('DB')->exec('
+				SELECT `sfid`, `content`
+				FROM `posts`
+				WHERE `pid`=:pid',
+				array( 
+					':pid'=>$f3->get('POST.postId') 
+				)
+			);
+			
+			// Loop to add to all others except original
+			for ($i=0; $i<count($subForums); $i++){
+				
+				if ($subForums[$i]['sfid'] !=  $postForum[0]['sfid'] ){
+					
+					$f3->get('DB')->exec('
+						INSERT INTO `posts`
+							(`sfid`, `parent`, `author`, `content`, `flag`)
+						VALUES
+							(:sfid, 0, 1, :content, 1)',
+						array( 
+							':sfid'=>$subForums[$i]['sfid'],
+							':content'=>$postForum[0]['content']				
+						)
+					);
+				}
+			}
+			echo "post promoted";
+		}
+		else {
+			echo "not authorised";
+		}
+	}
+	
+	
 	//
 	function subForumDirect($f3){
 		
@@ -304,7 +357,7 @@ class Discussions {
 
 			// Retrieve the forum prompt and peek setting
 			$forum = $f3->get('DB')->exec('
-				SELECT `prompt`, `allow_peeking` 
+				SELECT `fid`, `prompt`, `allow_peeking` 
 				FROM `forum_meta`  
 				WHERE 
 					`fid` = :fid ',

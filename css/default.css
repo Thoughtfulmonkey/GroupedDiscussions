@@ -140,7 +140,22 @@ form input:hover{
 }
 
 .reply_button{
-	
+	float: right;
+	padding: 0px 0px 0px 10px;
+	cursor: pointer;
+}
+
+.promote_button{
+	float: right;
+	cursor: pointer;
+}
+
+.promoted{
+	background-color: #ffe;
+}
+
+.promoted .post_author{
+	color: #800;
 }
 
 .peek_tab{

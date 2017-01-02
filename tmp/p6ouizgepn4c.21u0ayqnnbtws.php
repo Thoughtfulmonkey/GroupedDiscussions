@@ -76,6 +76,28 @@
 				addTinyMCE( this );
 			});
 			
+			<?php if ($SESSION['type']==0): ?>
+			
+				// A promote button was clicked (only admin can promote)
+				$('.promote_button').click(function(){
+					
+					var promoId = $(this).attr('id').substring(4);
+				
+					$.post("<?php echo $APPROOT; ?>/promote",
+						{
+							postId: promoId,
+							forum: <?php echo $forum_meta['fid']; ?>
+						},
+						function(data, status){
+							// TODO: Check status first
+							alert(data);
+						}
+					);
+					
+				});
+			
+			<?php endif; ?>
+			
 			<?php if (($forum_meta['allow_peeking']) && ($SESSION['type']!=0)): ?>
 				// Peeking click
 				$('#peek_left_tab').click( function(){ 
@@ -136,9 +158,12 @@
 	<div id="discussion_list">
 
 			<?php foreach (($subforumposts?:array()) as $post): ?>
-				<div class="post" id="pst_<?php echo $post['pid']; ?>" data-parent="<?php echo $post['parent']; ?>">
+				<div class="post <?php if ($post['flag']==1): ?>promoted<?php endif; ?>" id="pst_<?php echo $post['pid']; ?>" data-parent="<?php echo $post['parent']; ?>">
 					<div class="post_head">
-						<div class="post_author"><?php echo $post['username']; ?></div>
+						<?php if ($post['flag']==1): ?>
+							<div class="post_author">Promoted</div>
+							<?php else: ?><div class="post_author"><?php echo $post['username']; ?></div>
+						<?php endif; ?>
 						<div class="post_date"><?php echo $post['created']; ?></div>
 					</div>
 					<div class="post_body">
@@ -146,6 +171,9 @@
 					</div>
 					<div class="post_footer">
 						<div class="reply_button" id="rpy_<?php echo $post['pid']; ?>">Reply</div>
+						<?php if ($SESSION['type']==0): ?>
+							<div class="promote_button" id="pro_<?php echo $post['pid']; ?>">Promote</div>
+						<?php endif; ?>
 					</div>
 				</div>
 			<?php endforeach; ?>

@@ -62,6 +62,9 @@ $f3->route('POST /build_grouping/@method', 'Grouping->buildGrouping');		// Uniqu
 // Peeking
 $f3->route('GET /peek/@fid/@direction', 'Discussions->peek');			// Peek at an adjacent discussion
 
+// Promoting (polinating)
+$f3->route('POST /promote', 'Discussions->promote');					// Share a post amongst sibling sub-forums
+
 // Dev calls
 // TODO: remove before shipping
 $f3->route('GET /purge', 'DevTools->purge');						// Wipe non-essential data for fresh restart

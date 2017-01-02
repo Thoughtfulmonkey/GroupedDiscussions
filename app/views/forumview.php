@@ -76,6 +76,28 @@
 				addTinyMCE( this );
 			});
 			
+			<check if="{{ @SESSION.type==0 }}"><true>
+			
+				// A promote button was clicked (only admin can promote)
+				$('.promote_button').click(function(){
+					
+					var promoId = $(this).attr('id').substring(4);
+				
+					$.post("{{ @APPROOT }}/promote",
+						{
+							postId: promoId,
+							forum: {{ @forum_meta.fid }}
+						},
+						function(data, status){
+							// TODO: Check status first
+							alert(data);
+						}
+					);
+					
+				});
+			
+			</true></check>
+			
 			<check if="{{ (@forum_meta.allow_peeking) && (@SESSION.type!=0) }}"><true>
 				// Peeking click
 				$('#peek_left_tab').click( function(){ 
@@ -136,9 +158,12 @@
 	<div id="discussion_list">
 
 			<repeat group="{{ @subforumposts }}" value="{{ @post }}">
-				<div class="post" id="pst_{{ @post.pid }}" data-parent="{{ @post.parent }}">
+				<div class="post <check if="@post.flag==1"><true>promoted</true></check>" id="pst_{{ @post.pid }}" data-parent="{{ @post.parent }}">
 					<div class="post_head">
-						<div class="post_author">{{ @post.username  }}</div>
+						<check if="@post.flag==1">
+							<true><div class="post_author">Promoted</div></true>
+							<false><div class="post_author">{{ @post.username  }}</div></false>
+						</check>
 						<div class="post_date">{{ @post.created }}</div>
 					</div>
 					<div class="post_body">
@@ -146,6 +171,9 @@
 					</div>
 					<div class="post_footer">
 						<div class="reply_button" id="rpy_{{ @post.pid }}">Reply</div>
+						<check if="{{ @SESSION.type==0 }}"><true>
+							<div class="promote_button" id="pro_{{ @post.pid }}">Promote</div>
+						</true></check>
 					</div>
 				</div>
 			</repeat>
