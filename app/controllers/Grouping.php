@@ -3,9 +3,6 @@
 // All the discussion stuff
 class Grouping {
 	
-	// TODO: Verify in DB somehow (maybe build DB from these)
-	const TYPE_NONE = 0;
-	const TYPE_SILO = 1;
 	
 	// Main landing function
 	static function addToGroup($f3, $forum){
@@ -15,147 +12,26 @@ class Grouping {
 		// Only add to a group if not an admin
 		if ( $f3->get('SESSION.type') != 0 ){
 			
+			$plugin = 'grouptypes\\'.$forum[0]['name'];
+			$addedTo = $plugin::registerUser($f3, $forum);
+		/*	
 			// Switch based on group type
 			switch( $forum[0]['name'] ){
 				case 'none':
-					$addedTo = Grouping::singleForum($f3, $forum);
+					$plugin = 'grouptypes\None';
+					
 					break;
 				case 'silo':
-					$addedTo = Grouping::addToSilo($f3, $forum);
+					$plugin = 'grouptypes\Silo';
+					$addedTo = $plugin::registerUser($f3, $forum);
 					break;
 				default:
 					// Same as none? Or return error?
 			}
+		*/
 		}
 		
 		return $addedTo;
-	}
-	
-	
-	// Group users into silos
-	// Do not exceed maximum number
-	// TODO: use multiple active silos to reduce chance of loners
-	static function addToSilo($f3, $forum){
-	
-		// Get maximum number
-		$details = $f3->get('DB')->exec('
-			SELECT * 
-			FROM `grouping_'.$forum[0]['name'].'` 
-			WHERE 
-				`id` = :gid ',
-			array( ':gid'=>$forum[0]['typeid'] )
-		);	
-		$max = $details[0]['max'];
-		
-		// Search for groups with less than maximum
-		$suitableGroups = $f3->get('DB')->exec('
-			SELECT `sub_forum`.`sfid`, COUNT(`membership`.`sfid`) AS members
-			FROM `sub_forum` 
-				INNER JOIN `membership` ON `sub_forum`.`sfid` = `membership`.`sfid` 
-			WHERE
-				`fid`=:fid
-			GROUP BY 
-				`membership`.`sfid`
-			HAVING
-				COUNT(`membership`.`sfid`)<:max',
-			array( ':fid'=>$forum[0]['fid'], ':max'=>$max )
-		);
-		
-		// If no suitable groups exist, then create one
-		// TODO: Use transaction or rollback in F3 to prevent lots of sub-forums if errors
-		if ( count($suitableGroups)==0 ){
-
-			// Create a sub-forum
-			$f3->get('DB')->exec('
-				INSERT INTO `sub_forum`
-					(`fid`)
-				VALUES
-					(:fid)',
-				array( ':fid'=>$forum[0]['fid'] )
-			);
-			
-			// Re-search for the newly added group (note left join)
-			$suitableGroups = $f3->get('DB')->exec('
-				SELECT `sub_forum`.`sfid`, COUNT(`membership`.`sfid`) AS members
-				FROM `sub_forum` 
-					LEFT JOIN `membership` ON `sub_forum`.`sfid` = `membership`.`sfid` 
-				WHERE
-					`fid`=:fid
-				GROUP BY 
-					`membership`.`sfid`
-				HAVING
-					COUNT(`membership`.`sfid`)<:max',
-				array( ':fid'=>$forum[0]['fid'], ':max'=>$max )
-			);
-		}
-
-		// Add to a suitable group
-		// Either found one with less than max users, or created new
-		$f3->get('DB')->exec('
-			INSERT INTO `membership`
-				(`uid`, `sfid`)
-			VALUES
-				(:uid, :sfid)',
-			array( ':uid'=>$f3->get('SESSION.uid'), ':sfid'=>$suitableGroups[0]['sfid'] )
-		);
-
-		return $suitableGroups[0]['sfid'];
-	}
-	
-	
-	// Single forum for everyone
-	// See if a single sub-forum entry exists, and create if not
-	static function singleForum($f3, $forum){
-		
-		// Search for groups with less than maximum
-		$subForum = $f3->get('DB')->exec('
-			SELECT `sub_forum`.`sfid`
-			FROM `sub_forum` 
-				INNER JOIN `membership` ON `sub_forum`.`sfid` = `membership`.`sfid` 
-			WHERE
-				`fid`=:fid
-			GROUP BY 
-				`membership`.`sfid`',
-			array( ':fid'=>$forum[0]['fid'] )
-		);
-		
-		// If no suitable groups exist, then create one
-		// TODO: Use transaction or rollback in F3 to prevent lots of sub-forums if errors
-		if ( count($subForum)==0 ){
-
-			// Create a sub-forum
-			$f3->get('DB')->exec('
-				INSERT INTO `sub_forum`
-					(`fid`)
-				VALUES
-					(:fid)',
-				array( ':fid'=>$forum[0]['fid'] )
-			);
-			
-			// Re-search for the newly added group (note left join)
-			$subForum = $f3->get('DB')->exec('
-				SELECT `sub_forum`.`sfid`
-				FROM `sub_forum` 
-					LEFT JOIN `membership` ON `sub_forum`.`sfid` = `membership`.`sfid` 
-				WHERE
-					`fid`=:fid
-				GROUP BY 
-					`membership`.`sfid`',
-				array( ':fid'=>$forum[0]['fid'] )
-			);
-		}
-		
-		// Add to a suitable group
-		// Either found one with less than max users, or created new
-		$f3->get('DB')->exec('
-			INSERT INTO `membership`
-				(`uid`, `sfid`)
-			VALUES
-				(:uid, :sfid)',
-			array( ':uid'=>$f3->get('SESSION.uid'), ':sfid'=>$subForum[0]['sfid'] )
-		);
-		
-		return $subForum[0]['sfid'];
 	}
 	
 	
@@ -209,17 +85,9 @@ class Grouping {
 		// Set creation flag
 		$f3->set('mode', 'create');
 		
-		switch ($method){
-			case "none":
-				echo Template::instance()->render('app/views/confignone.php');
-				break;
-			case "silo":
-				echo Template::instance()->render('app/views/configsilo.php');
-				break;
-			default:
-				// Redirect to the discussion root, not sure what else to do
-				$f3->reroute('/discussion');
-		}
+		// Find appropriate config view for grouping type
+		$plugin = 'grouptypes\\'.$method;
+		echo Template::instance()->render( $plugin::getConfigView() );
 
 	}
 	
@@ -230,18 +98,14 @@ class Grouping {
 		// Sanitise grouping method on address bar
 		$method = $f3->get('PARAMS.method');
 		$method = $f3->scrub($method);
+	
+		// Process group specific config details
+		$plugin = 'grouptypes\\'.$method;
+		$groupingId = $plugin::buildGrouping($f3);
 		
-		switch ($method){
-			case "none":
-				$this->buildDiscussionMeta($f3, Grouping::TYPE_NONE, null);
-				break;
-			case "silo":
-				$this->buildSiloGrouping($f3);
-				break;
-			default:
-				// Redirect to the discussion root, not sure what else to do
-				$f3->reroute('/discussion');
-		}
+		// Process generic form details
+		$this->buildDiscussionMeta($f3, $plugin::TYPE_ID, $groupingId);
+	
 	}
 	
 	
@@ -300,32 +164,10 @@ class Grouping {
 		// Set editing flag
 		$f3->set('mode', 'edit');
 		
-		// Is there a grouping option?
-		if ( $f3->get('forumData')[0]['name'] == "none" ){
-			echo Template::instance()->render('app/views/confignone.php');
-		} else {
-			
-			// Load the grouping config
-			$f3->set('groupingData', $f3->get('DB')->exec('
-				SELECT *
-				FROM `grouping_'.$f3->get('forumData')[0]['name'].'`
-				WHERE `id`=:typeid',
-				array( 
-					':typeid'=>$f3->get('forumData')[0]['typeid']
-				)
-			));
-			
-			// Stick with set grouping method
-			switch ( $f3->get('forumData')[0]['name'] ){
-				case "silo":
-					echo Template::instance()->render('app/views/configsilo.php');
-					break;
-				default:
-					// Redirect to the discussion root, not sure what else to do
-					// - should probably be error (but shouldn't reach this)
-					$f3->reroute('/discussion');
-			}
-		}
+		// Select appropriate view for editing this grouping type
+		$plugin = 'grouptypes\\'.$f3->get('forumData')[0]['name'];
+		$view = $plugin::storeGroupingData($f3);
+		echo Template::instance()->render($view);
 		
 	}
 	
@@ -377,132 +219,13 @@ class Grouping {
 		// Is there a grouping option?
 		if ( null !== $f3->get('POST.grouping') ){
 			
-			// Stick with set grouping method
-			switch( $f3->get('POST.grouping') ){
-				case "silo":
-					$this->updateSiloGrouping($f3, $fid);
-					break;
-				default:
-					// Redirect to the discussion root, not sure what else to do
-					// - should probably be error (but shouldn't reach this)
-					$f3->reroute('/discussion');
-			}
+			$plugin = 'grouptypes\\'.$f3->get('POST.grouping');
+			$view = $plugin::updateGroupingData($f3, $fid);
 		}
 		
 		// Reroute to discussion listing
 		$f3->reroute('/discussion/'.$fid);
 	}
 	
-	
-	// Fill grouping config table from form data
-	//  Requires correct JSON structure set in grouping table
-	//  Replaced by individual function - in case they need to do something fancy
-	function groupingParamPump($f3, $groupingName){
-		
-		// Retrieve grouping type id
-		$grouping = $f3->get('DB')->exec('
-			SELECT id, structure
-			FROM `groupings`
-			WHERE
-				`name`=:option',
-			array( ':option'=> $groupingName)
-		);
-	
-		// TODO: re-route on error (no option found)
-
-		// Processing parameters (if any)
-		$groupingId = null;
-		if ( $grouping[0]["structure"] ){
-		
-			// Process parameter list for SQL query elements
-			$j = json_decode( $grouping[0]["structure"] );
-			$pString = "";
-			$pString = "";
-			$vList = [];
-			for ($i=0; $i<count($j->params); $i++){
-				
-				$pString = $pString."`".$j->params[$i]->name."`";
-				$vString = $vString."?";
-				
-				//$vList[$j->params[$i]->name] = $f3->get('POST.'.$j->params[$i]->name);
-				array_push( $vList, $f3->get('POST.'.$j->params[$i]->name) );
-				
-				if ($i<count($j->params)-1) {
-					$pString = $pString.", ";
-					$vString = $vString.", ";
-				}
-			}
-			
-			// Create an entry in grouping table for this forum
-			//  $groupingName chooses table for this grouping's params
-			//  $pString is the list of parameters separated by commas
-			//  $vString is a series of question marks - one for each parameter
-			//  $vList is an array of parameters - to substitue the question marks
-			$f3->get('DB')->exec('
-				INSERT INTO `grouping_'.$groupingName.'`
-					('.$pString.')
-				VALUES
-					('.$vString.')',
-				$vList
-			);
-
-			
-			// Find last inserted id
-			$result = $f3->get('DB')->exec('SELECT LAST_INSERT_ID()');
-			$groupingId = $result[0]['LAST_INSERT_ID()'];
-		}
-		
-		// Build meta data entry
-		$this->buildDiscussionMeta($f3, $grouping[0]["id"], $groupingId);
-	}
-	
-	
-	// Specific data configuration for silo grouping type
-	function buildSiloGrouping($f3){
-		
-		$f3->get('DB')->exec('
-			INSERT INTO `grouping_silo`
-				(`min`, `max`)
-			VALUES
-				(:min, :max)',
-			array( 
-				':min'=>$f3->get('POST.min'),
-				':max'=>$f3->get('POST.max')
-			)
-		);
-
-		// Find last inserted id
-		$result = $f3->get('DB')->exec('SELECT LAST_INSERT_ID()');
-		$groupingId = $result[0]['LAST_INSERT_ID()'];
-		
-		// Build meta data entry
-		$this->buildDiscussionMeta($f3, Grouping::TYPE_SILO, $groupingId);
-	}
-	
-	// Update for silo grouping
-	function updateSiloGrouping($f3, $fid){
-		
-		$f3->get('DB')->exec('
-			UPDATE `grouping_silo`
-				JOIN `forum_meta` ON `forum_meta`.`typeid` = `grouping_silo`.`id`
-			SET `min`=:min
-			WHERE `fid`=:fid',
-			array( 
-				':min'=>$f3->get('POST.min'),
-				':fid'=>$fid,
-			)
-		);
-		$f3->get('DB')->exec('
-			UPDATE `grouping_silo`
-				JOIN `forum_meta` ON `forum_meta`.`typeid` = `grouping_silo`.`id`
-			SET `max`=:max
-			WHERE `fid`=:fid',
-			array( 
-				':max'=>$f3->get('POST.max'),
-				':fid'=>$fid,
-			)
-		);		
-		
-	}
 	
 }

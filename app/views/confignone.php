@@ -35,7 +35,7 @@
 		<form id="new_form" method='post' 
 			<check if="{{ @mode=='edit' }}">
 				<true> action='{{ @APPROOT }}/discussion/update/{{ @forumData[0].fid }}' </true>
-				<false>	action='{{ @APPROOT }}/build_grouping/silo' </false>
+				<false>	action='{{ @APPROOT }}/build_grouping/none' </false>
 			</check>
 		>
 			
