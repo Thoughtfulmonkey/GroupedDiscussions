@@ -39,6 +39,7 @@ $f3->route('GET /login', 'MyAuth->showlogin');		// Show login page
 $f3->route('POST /login', 'MyAuth->attemptlogin');	// Attempt to login
 $f3->route('GET /login/@uid', 'MyAuth->devlogin');	// Attempt to login as a user (dev mode)
 $f3->route('GET /logout', 'MyAuth->logout');		// Log the user out
+$f3->route('POST /lti', 'MyAuth->lti');				// Accept an LTI request
 
 // Discussion
 $f3->route('GET /discussion', 'Discussions->listall');				// Discussion root 
