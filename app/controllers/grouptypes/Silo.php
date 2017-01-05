@@ -50,26 +50,26 @@ class Silo {
 	}
 	
 	// Handles submission of edit form
-	public static function updateGroupingData($f3, $fid){
+	public static function updateGroupingData($f3, $publicfid){
 		
 		$f3->get('DB')->exec('
 			UPDATE `grouping_silo`
 				JOIN `forum_meta` ON `forum_meta`.`typeid` = `grouping_silo`.`id`
 			SET `min`=:min
-			WHERE `fid`=:fid',
+			WHERE `publicId`=:publicfid',
 			array( 
 				':min'=>$f3->get('POST.min'),
-				':fid'=>$fid,
+				':publicfid'=>$publicfid,
 			)
 		);
 		$f3->get('DB')->exec('
 			UPDATE `grouping_silo`
 				JOIN `forum_meta` ON `forum_meta`.`typeid` = `grouping_silo`.`id`
 			SET `max`=:max
-			WHERE `fid`=:fid',
+			WHERE `publicId`=:publicfid',
 			array( 
 				':max'=>$f3->get('POST.max'),
-				':fid'=>$fid,
+				':publicfid'=>$publicfid,
 			)
 		);		
 	}
@@ -129,6 +129,10 @@ class Silo {
 					COUNT(`membership`.`sfid`)<:max',
 				array( ':fid'=>$forum[0]['fid'], ':max'=>$max )
 			);
+			
+			// Generate public ID
+			// Slash is to return to root namespace
+			\IdGeneration::generateLabel($f3, $suitableGroups[0]['sfid'], "sub_forum", 10);
 		}
 
 		// Add to a suitable group

@@ -66,6 +66,10 @@ class None {
 					`membership`.`sfid`',
 				array( ':fid'=>$forum[0]['fid'] )
 			);
+			
+			// Generate public ID
+			// Slash is to return to root namespace
+			\IdGeneration::generateLabel($f3, $subForum[0]['sfid'], "sub_forum", 10);
 		}
 		
 		// Add to a suitable group

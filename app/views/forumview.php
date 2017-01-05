@@ -86,7 +86,7 @@
 					$.post("{{ @APPROOT }}/promote",
 						{
 							postId: promoId,
-							forum: {{ @forum_meta.fid }}
+							forum: "{{ @forum_meta.publicId }}"
 						},
 						function(data, status){
 							// TODO: Check status first
@@ -158,7 +158,7 @@
 	<div id="discussion_list">
 
 			<repeat group="{{ @subforumposts }}" value="{{ @post }}">
-				<div class="post <check if="@post.flag==1"><true>promoted</true></check>" id="pst_{{ @post.pid }}" data-parent="{{ @post.parent }}">
+				<div class="post <check if="@post.flag==1"><true>promoted</true></check>" id="pst_{{ @post.publicId }}" data-parent="{{ @post.parent }}">
 					<div class="post_head">
 						<check if="@post.flag==1">
 							<true><div class="post_author">Promoted</div></true>
@@ -170,9 +170,9 @@
 						<p>{{ @post.content | raw }}</p>
 					</div>
 					<div class="post_footer">
-						<div class="reply_button" id="rpy_{{ @post.pid }}">Reply</div>
+						<div class="reply_button" id="rpy_{{ @post.publicId }}">Reply</div>
 						<check if="{{ @SESSION.type==0 }}"><true>
-							<div class="promote_button" id="pro_{{ @post.pid }}">Promote</div>
+							<div class="promote_button" id="pro_{{ @post.publicId }}">Promote</div>
 						</true></check>
 					</div>
 				</div>

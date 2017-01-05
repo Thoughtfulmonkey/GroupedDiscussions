@@ -30,8 +30,6 @@ class MyAuth {
 		// Get the hashed version of the user's password
 		$hashedpass = Crypto::hashpassword( $f3->get('POST.password') );
 		
-		echo Crypto::hashpassword( "" );
-		
 		// Create mapper object from users table in DB
 		$user=new DB\SQL\Mapper( $f3->get('DB') , 'user' );
 		
@@ -54,6 +52,7 @@ class MyAuth {
 			}
 			else {
 				// Reload login page, but with error
+				//  Should never get here. No hashed password will match empty string in database
 				$f3->set('loginmessage', 'Please follow the link in your course to login');
 				echo Template::instance()->render('app/views/login.php');
 			}

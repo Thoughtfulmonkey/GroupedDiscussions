@@ -32,7 +32,7 @@
 	
 		<repeat group="{{ @forumlist }}" value="{{ @forum }}">
 			<div class="discussion_block">
-				<a href="discussion/{{ @forum.fid  }}">{{ @forum.title  }}</a><br>
+				<a href="discussion/{{ @forum.publicId  }}">{{ @forum.title  }}</a><br>
 			</div>
 		</repeat>
 		

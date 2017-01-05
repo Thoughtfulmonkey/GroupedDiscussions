@@ -14,21 +14,7 @@ class Grouping {
 			
 			$plugin = 'grouptypes\\'.$forum[0]['name'];
 			$addedTo = $plugin::registerUser($f3, $forum);
-		/*	
-			// Switch based on group type
-			switch( $forum[0]['name'] ){
-				case 'none':
-					$plugin = 'grouptypes\None';
-					
-					break;
-				case 'silo':
-					$plugin = 'grouptypes\Silo';
-					$addedTo = $plugin::registerUser($f3, $forum);
-					break;
-				default:
-					// Same as none? Or return error?
-			}
-		*/
+
 		}
 		
 		return $addedTo;
@@ -136,6 +122,13 @@ class Grouping {
 			)
 		);
 		
+		// Get the last inserted ID
+		$result = $f3->get('DB')->exec('SELECT LAST_INSERT_ID()');
+		$lid = $result[0]['LAST_INSERT_ID()'];
+		
+		// Generate a public ID
+		IdGeneration::generateLabel($f3, $lid, "forum_meta", 10);
+		
 		// Redirect to the discussion root
 		$f3->reroute('/discussion');
 	}
@@ -146,18 +139,18 @@ class Grouping {
 	function edit($f3){
 		
 		// Sanitise forum id
-		$fid = $f3->get('PARAMS.fid');
-		$fid = $f3->scrub($fid);
+		$publicfid = $f3->get('PARAMS.fid');
+		$publicfid = $f3->scrub($publicfid);
 		
 		// Pull the forum details
 		// - could be twice in a row. Any more efficient way?
 		$f3->set('forumData', $f3->get('DB')->exec('
-			SELECT `fid`, `grouptype`, `typeid`, `title`, `prompt`, `allow_peeking`, `name`
+			SELECT `fid`, `publicId`, `grouptype`, `typeid`, `title`, `prompt`, `allow_peeking`, `name`
 			FROM `forum_meta`
 				JOIN `groupings` ON `forum_meta`.`grouptype` = `groupings`.`id`
-			WHERE `fid`=:fid',
+			WHERE `publicId`=:publicfid',
 			array( 
-				':fid'=>$fid
+				':publicfid'=>$publicfid
 			)
 		));
 		
@@ -176,8 +169,8 @@ class Grouping {
 	function update ($f3){
 		
 		// Sanitise forum id
-		$fid = $f3->get('PARAMS.fid');
-		$fid = $f3->scrub($fid);
+		$publicfid = $f3->get('PARAMS.fid');
+		$publicfid = $f3->scrub($publicfid);
 		
 		// TODO: verify admin?
 		//  should probably do something in index.php with admin only routing
@@ -186,19 +179,19 @@ class Grouping {
 		$f3->get('DB')->exec('
 			UPDATE `forum_meta`
 			SET `title`=:title
-			WHERE `fid`=:fid',
+			WHERE `publicId`=:publicfid',
 			array( 
 				':title'=>$f3->get('POST.title'),
-				':fid'=>$fid,
+				':publicfid'=>$publicfid,
 			)
 		);
 		$f3->get('DB')->exec('
 			UPDATE `forum_meta`
 			SET `prompt`=:prompt
-			WHERE `fid`=:fid',
+			WHERE `publicId`=:publicfid',
 			array( 
 				':prompt'=>$f3->get('POST.prompt'),
-				':fid'=>$fid,
+				':publicfid'=>$publicfid,
 			)
 		);
 		// Peeking switch
@@ -207,10 +200,10 @@ class Grouping {
 		$f3->get('DB')->exec('
 			UPDATE `forum_meta`
 			SET `allow_peeking`=:peeking
-			WHERE `fid`=:fid',
+			WHERE `publicId`=:publicfid',
 			array( 
 				':peeking'=>$allowPeeking,
-				':fid'=>$fid,
+				':publicfid'=>$publicfid,
 			)
 		);
 		
@@ -220,11 +213,11 @@ class Grouping {
 		if ( null !== $f3->get('POST.grouping') ){
 			
 			$plugin = 'grouptypes\\'.$f3->get('POST.grouping');
-			$view = $plugin::updateGroupingData($f3, $fid);
+			$view = $plugin::updateGroupingData($f3, $publicfid);
 		}
 		
 		// Reroute to discussion listing
-		$f3->reroute('/discussion/'.$fid);
+		$f3->reroute('/discussion/'.$publicfid);
 	}
 	
 	

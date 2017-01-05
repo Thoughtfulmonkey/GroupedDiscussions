@@ -15,7 +15,7 @@ class Discussions {
 			if ( $f3->get('SESSION.type') == 0 ){
 				
 				// Find all of the forums
-				$f3->set('forumlist', $f3->get('DB')->exec('SELECT title, fid FROM forum_meta'));
+				$f3->set('forumlist', $f3->get('DB')->exec('SELECT title, publicId FROM forum_meta'));
 			
 				// Render the discussion list template (depending on whether admin or not)
 				echo Template::instance()->render('app/views/discussionadminlist.php');
@@ -23,7 +23,7 @@ class Discussions {
 			} else {
 				
 				// Find all of the forums
-				$f3->set('forumlist', $f3->get('DB')->exec('SELECT title, fid FROM forum_meta'));
+				$f3->set('forumlist', $f3->get('DB')->exec('SELECT title, publicId FROM forum_meta'));
 			
 				// Render the discussion list template (depending on whether admin or not)
 				echo Template::instance()->render('app/views/discussionlist.php');
@@ -50,23 +50,24 @@ class Discussions {
 	function subForumListing($f3){
 		
 		// Sanitise forum id on address bar
-		$fid = $f3->get('PARAMS.fid');
-		$fid = $f3->scrub($fid);
+		$publicId = $f3->get('PARAMS.fid');
+		$publicId = $f3->scrub($publicId);
 		
 		// Get the forum details
 		$f3->set('forumData', $f3->get('DB')->exec('
-			SELECT `fid`, `grouptype`, `title`, `prompt`
+			SELECT `fid`, `publicId`, `grouptype`, `title`, `prompt`
 			FROM `forum_meta`
-			WHERE `fid`=:fid',
+			WHERE `publicId`=:publicId',
 			array( 
-				':fid'=>$fid
+				':publicId'=>$publicId
 			)
 		));
-		
+
 		// Find all of the sub-forums
 		$f3->set('subforums', $f3->get('DB')->exec('
 			SELECT 
-				`sub_forum`.`sfid`, 
+				`sub_forum`.`sfid`,
+				`sub_forum`.`publicId`,
 				COUNT(`membership`.`sfid`) AS "members" 
 			FROM `sub_forum` 
 				JOIN `membership` ON `sub_forum`.`sfid` = `membership`.`sfid` 
@@ -75,7 +76,7 @@ class Discussions {
 			GROUP BY 
 				`sub_forum`.`sfid`',
 			array( 
-				':fid'=>$fid
+				':fid'=>$f3->get('forumData')[0]['fid']
 			)
 		));
 		
@@ -88,27 +89,31 @@ class Discussions {
 	// - redirect to a sub-forum
 	function discussionRedirect($f3){
 		
+		// Retrieve the forum prompt and peek setting
+		$forum = $f3->get('DB')->exec('
+			SELECT `fid`, `prompt`, `allow_peeking` 
+			FROM `forum_meta`  
+			WHERE 
+				`publicId` = :publicId',
+			array( ':publicId'=>$f3->get('PARAMS.fid') )
+		);
+		$f3->set('forum_meta', $forum[0]);
+		
 		// Is the user a member of this forum (search for sub-forum index)
 		$f3->set('subindex', $f3->get('DB')->exec('
-			SELECT `sub_forum`.`sfid` 
+			SELECT `sub_forum`.`sfid`, `sub_forum`.`publicId` 
 			FROM `user` 
 				INNER JOIN `membership` ON `user`.`uid` = `membership`.`uid` 
 				INNER JOIN `sub_forum` ON `membership`.`sfid` = `sub_forum`.`sfid` 
 			WHERE 
 				`sub_forum`.`fid` = :fid 
 				AND `user`.`uid` = :uid',
-			array( ':fid'=>$f3->get('PARAMS.fid'), ':uid'=>$f3->get('SESSION.uid') )
+			array( 
+				':fid'=>$forum[0]['fid'], 
+				':uid'=>$f3->get('SESSION.uid')
+			)
 		));
-		
-		// Retrieve the forum prompt and peek setting
-		$forum = $f3->get('DB')->exec('
-			SELECT `fid`, `prompt`, `allow_peeking` 
-			FROM `forum_meta`  
-			WHERE 
-				`fid` = :fid ',
-			array( ':fid'=>$f3->get('PARAMS.fid') )
-		);
-		$f3->set('forum_meta', $forum[0]);
+
 		
 		// Yes, they are a member of this forum already  - slightly weird to set subindex (maybe confused at the time)
 		if ( count($f3->get('subindex')) == 1 ){
@@ -125,7 +130,7 @@ class Discussions {
 					INNER JOIN `groupings` ON `forum_meta`.`grouptype` = `groupings`.`id` 
 				WHERE 
 					`forum_meta`.`fid` = :fid ',
-				array( ':fid'=>$f3->get('PARAMS.fid') )
+				array( ':fid'=>$forum[0]['fid'] )
 			);
 			
 			// Assign to a sub-forum as required
@@ -147,8 +152,8 @@ class Discussions {
 	function displaysubforum($f3, $index, $peek){
 		
 		// Sanitise forum id on address bar
-		$fid = $f3->get('PARAMS.fid');
-		$fid = $f3->scrub($fid);
+		$publicfid = $f3->get('PARAMS.fid');
+		$publicfid = $f3->scrub($publicfid);
 		
 		// Find all posts for this sub-forum, and author details
 		$f3->set('subforumposts', $f3->get('DB')->exec('
@@ -162,7 +167,7 @@ class Discussions {
 			array( ':sfid'=>$index )
 		));
 		
-		$f3->set('fid', $fid);
+		$f3->set('publicId', $publicfid);
 		
 		// Render the discussion list template
 		if ($peek) echo Template::instance()->render('app/views/forumpeek.php');
@@ -179,8 +184,17 @@ class Discussions {
 		// TODO: integrate nonce-style checking
 		
 		// Sanitise forum id on address bar
-		$fid = $f3->get('PARAMS.fid');
-		$fid = $f3->scrub($fid);
+		$publicId = $f3->get('PARAMS.fid');
+		$publicId = $f3->scrub($publicId);
+		
+		// Get the forum ID
+		$forum = $f3->get('DB')->exec('
+			SELECT `fid` 
+			FROM `forum_meta`  
+			WHERE 
+				`publicId` = :publicId',
+			array( ':publicId'=>$f3->get('PARAMS.fid') )
+		);
 		
 		// Find which sub-forum the user should post to
 		$result = $f3->get('DB')->exec('
@@ -191,12 +205,14 @@ class Discussions {
 			WHERE 
 				`sub_forum`.`fid` = :fid 
 				AND `user`.`uid` = :uid',
-			array( ':fid'=>$fid, ':uid'=>$f3->get('SESSION.uid') )
+			array( ':fid'=>$forum[0]['fid'], ':uid'=>$f3->get('SESSION.uid') )
 		);
 		
 		// TODO: what if nothing returned?
 		
 		// Insert the post data
+		$parent = $f3->get('POST.pid');
+		if ( $parent == "x" ) $parent = null;
 		$f3->get('DB')->exec('
 			INSERT INTO `posts`
 				(`sfid`, `parent`, `author`, `content`, `created`)
@@ -204,14 +220,21 @@ class Discussions {
 				(:sfid, :parent, :uid, :content, CURRENT_TIMESTAMP)',
 			array( 
 				':sfid'=>$result[0]['sfid'],
-				':parent'=>$f3->get('POST.pid'),
+				':parent'=>$parent,
 				':uid'=>$f3->get('SESSION.uid'),
 				':content'=>$f3->get('POST.posttext')
 			)
 		);
 		
+		// Get the last inserted ID
+		$result = $f3->get('DB')->exec('SELECT LAST_INSERT_ID()');
+		$lid = $result[0]['LAST_INSERT_ID()'];
+		
+		// Generate a public ID
+		IdGeneration::generateLabel($f3, $lid, "posts", 10);
+		
 		// Re-route back to discussion view
-		$f3->reroute('/discussion/'.$fid);
+		$f3->reroute('/discussion/'.$publicId);
 	}
 
 	
@@ -224,8 +247,17 @@ class Discussions {
 		
 		// Sanitise forum id on address bar
 		// TODO: Store in session to prevent URL manipulation
-		$fid = $f3->get('PARAMS.fid');
-		$fid = $f3->scrub($fid);
+		$publicId = $f3->get('PARAMS.fid');
+		$publicId = $f3->scrub($publicId);
+		
+		// Get the forum ID
+		$forum = $f3->get('DB')->exec('
+			SELECT `fid` 
+			FROM `forum_meta`  
+			WHERE 
+				`publicId` = :publicId',
+			array( ':publicId'=>$f3->get('PARAMS.fid') )
+		);
 		
 		// Find my sub_forum id
 		//  Duplicated from Discussions->land (think about making a function)
@@ -237,7 +269,10 @@ class Discussions {
 			WHERE 
 				`sub_forum`.`fid` = :fid 
 				AND `user`.`uid` = :uid',
-			array( ':fid'=>$f3->get('PARAMS.fid'), ':uid'=>$f3->get('SESSION.uid') )
+			array( 
+				':fid'=>$forum[0]['fid'], 
+				':uid'=>$f3->get('SESSION.uid') 
+			)
 		);
 		
 		// Is there an ID?
@@ -252,7 +287,7 @@ class Discussions {
 				WHERE `fid`=:fid
 				ORDER BY `sfid` ASC',
 				array(
-					':fid'=>$fid,
+					':fid'=>$forum[0]['fid'],
 				)
 			);
 
@@ -290,19 +325,30 @@ class Discussions {
 	
 	// Share a post amongst sibling sub-forums
 	function promote($f3){
-		
+
 		// Admin user?
 		if ( $f3->get('SESSION.type') == 0 ){
 			
 			// TODO: What if no post fields
 
+			// Get the forum ID
+			$forum = $f3->get('DB')->exec('
+				SELECT `fid` 
+				FROM `forum_meta`  
+				WHERE 
+					`publicId` = :publicId',
+				array( 
+					':publicId'=>$f3->get('POST.forum') 
+				)
+			);
+			
 			// Find the sub-forum ids
 			$subForums = $f3->get('DB')->exec('
 				SELECT `sfid`
 				FROM `sub_forum`
 				WHERE `fid` = :fid',
 				array( 
-					':fid'=>$f3->get('POST.forum') 
+					':fid'=>$forum[0]['fid']
 				)
 			);
 			
@@ -310,9 +356,9 @@ class Discussions {
 			$postForum = $f3->get('DB')->exec('
 				SELECT `sfid`, `content`
 				FROM `posts`
-				WHERE `pid`=:pid',
+				WHERE `publicId`=:publicId',
 				array( 
-					':pid'=>$f3->get('POST.postId') 
+					':publicId'=>$f3->get('POST.postId') 
 				)
 			);
 			
@@ -331,6 +377,13 @@ class Discussions {
 							':content'=>$postForum[0]['content']				
 						)
 					);
+					
+					// Get the last inserted ID
+					$result = $f3->get('DB')->exec('SELECT LAST_INSERT_ID()');
+					$lid = $result[0]['LAST_INSERT_ID()'];
+					
+					// Generate a public ID
+					IdGeneration::generateLabel($f3, $lid, "posts", 10);
 				}
 			}
 			echo "post promoted";
@@ -341,31 +394,39 @@ class Discussions {
 	}
 	
 	
-	//
+	// Direct access to view a sub-forum using its ID
 	function subForumDirect($f3){
 		
 		// Admin user?
 		if ( $f3->get('SESSION.type') == 0 ){
 			
 			// Sanitise forum id on address bar
-			$fid = $f3->get('PARAMS.fid');
-			$fid = $f3->scrub($fid);
+			$publicfid = $f3->get('PARAMS.fid');
+			$publicfid = $f3->scrub($publicfid);
 			
 			// Sanitise sub-forum id on address bar
-			$sfid = $f3->get('PARAMS.sfid');
-			$sfid = $f3->scrub($sfid);
+			$publicsfid = $f3->get('PARAMS.sfid');
+			$publicsfid = $f3->scrub($publicsfid);
 
 			// Retrieve the forum prompt and peek setting
 			$forum = $f3->get('DB')->exec('
-				SELECT `fid`, `prompt`, `allow_peeking` 
+				SELECT `fid`, `publicId`, `prompt`, `allow_peeking` 
 				FROM `forum_meta`  
 				WHERE 
-					`fid` = :fid ',
-				array( ':fid'=>$f3->get('PARAMS.fid') )
+					`publicId` = :publicfid ',
+				array( ':publicfid'=>$publicfid )
 			);
 			$f3->set('forum_meta', $forum[0]);
 			
-			$this->displaysubforum($f3, $sfid, "", false);
+			$sfidSearch = $f3->get('DB')->exec('
+				SELECT `sfid`
+				FROM `sub_forum`
+				WHERE
+					`publicId`=:publicsfid',
+				array( ':publicsfid'=>$publicsfid )
+			);
+			
+			$this->displaysubforum($f3, $sfidSearch[0]['sfid'], "", false);
 		}
 		else {
 			$f3->reroute('/discussion/'.$fid);
@@ -373,20 +434,29 @@ class Discussions {
 	}
 	
 	
-	//
+	// Direct posting into a sub-forum
+	//  allows admin to be in any forum
 	function subForumPostDirect($f3){
 		
 		// Admin user?
 		if ( $f3->get('SESSION.type') == 0 ){
 			
 			// Sanitise forum id on address bar
-			$fid = $f3->get('PARAMS.fid');
-			$fid = $f3->scrub($fid);
+			$publicfid = $f3->get('PARAMS.fid');
+			$publicfid = $f3->scrub($publicfid);
 			
 			// Sanitise forum id on address bar
-			$sfid = $f3->get('PARAMS.sfid');
-			$sfid = $f3->scrub($sfid);
+			$publicsfid = $f3->get('PARAMS.sfid');
+			$publicsfid = $f3->scrub($publicsfid);
 
+			$subforum = $f3->get('DB')->exec('
+				SELECT `sfid` 
+				FROM `sub_forum`  
+				WHERE 
+					`publicId` = :publicsfid ',
+				array( ':publicsfid'=>$publicsfid )
+			);
+			
 			// Insert the post data
 			$f3->get('DB')->exec('
 				INSERT INTO `posts`
@@ -394,18 +464,25 @@ class Discussions {
 				VALUES
 					(:sfid, :parent, :uid, :content, CURRENT_TIMESTAMP)',
 				array( 
-					':sfid'=>$sfid,
+					':sfid'=>$subforum[0]['sfid'],
 					':parent'=>$f3->get('POST.pid'),
 					':uid'=>$f3->get('SESSION.uid'),
 					':content'=>$f3->get('POST.posttext')
 				)
 			);
+			
+			// Get the last inserted ID
+			$result = $f3->get('DB')->exec('SELECT LAST_INSERT_ID()');
+			$lid = $result[0]['LAST_INSERT_ID()'];
+			
+			// Generate a public ID
+			IdGeneration::generateLabel($f3, $lid, "posts", 10);
 		
 			// Re-route back to discussion view
-			$f3->reroute('/discussion/'.$fid.'/'.$sfid);
+			$f3->reroute('/discussion/'.$publicfid.'/'.$publicsfid);
 		}
 		else {
-			$f3->reroute('/discussion/'.$fid);
+			$f3->reroute('/discussion/'.$publicfid);
 		}
 	}
 }

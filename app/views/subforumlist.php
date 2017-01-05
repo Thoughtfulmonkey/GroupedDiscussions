@@ -15,7 +15,7 @@
 	<include href="app/views/header.php" />
 
 	<div id="discussion_listing">
-		<div id="edit_link"><a href="{{ @APPROOT }}/discussion/edit/{{ @forumData[0].fid }}">Edit</a></div>
+		<div id="edit_link"><a href="{{ @APPROOT }}/discussion/edit/{{ @forumData[0].publicId }}">Edit</a></div>
 		<h1>{{ @forumData[0].title }}</h1>
 		<p>{{ @forumData[0].prompt | raw }}</p>
 		
@@ -23,10 +23,10 @@
 		
 		<p>Sub forums:</p>
 		<table class="data_table">
-			<tr><th>Index</th><th>Members</th></tr>
+			<tr><th>Reference</th><th>Members</th></tr>
 			<repeat group="{{ @subforums }}" value="{{ @subforum }}">
 				<tr>
-					<td><a href="{{ @APPROOT }}/discussion/{{ @forumData[0].fid }}/{{ @subforum.sfid }}">{{ @subforum.sfid }}</a></td>
+					<td><a href="{{ @APPROOT }}/discussion/{{ @forumData[0].publicId }}/{{ @subforum.publicId }}">{{ @subforum.publicId }}</a></td>
 					<td>{{ @subforum.members }}</td>
 				</tr>
 			</repeat>
