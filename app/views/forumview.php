@@ -37,7 +37,7 @@
 				$('#peek_overlay').empty();
 				$('#peek_overlay').removeClass();
 				$('#peek_overlay').addClass('peek_'+direction);
-				$('#peek_overlay').append('<iframe src="http://localhost/disc/peek/{{ @fid }}/'+direction+'"></iframe>');
+				$('#peek_overlay').append('<iframe src="http://localhost/disc/peek/{{ @forum_meta.publicId }}/'+direction+'"></iframe>');
 				$('#peek_overlay').show();
 			}
 		</true></check>
@@ -136,7 +136,6 @@
 			
 			
 		});
-		
 	
 	</script>
 </head>

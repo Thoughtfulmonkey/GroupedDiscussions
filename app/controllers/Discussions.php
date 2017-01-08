@@ -91,7 +91,7 @@ class Discussions {
 		
 		// Retrieve the forum prompt and peek setting
 		$forum = $f3->get('DB')->exec('
-			SELECT `fid`, `prompt`, `allow_peeking` 
+			SELECT `fid`, `publicId`, `prompt`, `allow_peeking` 
 			FROM `forum_meta`  
 			WHERE 
 				`publicId` = :publicId',
@@ -371,7 +371,7 @@ class Discussions {
 						INSERT INTO `posts`
 							(`sfid`, `parent`, `author`, `content`, `flag`)
 						VALUES
-							(:sfid, 0, 1, :content, 1)',
+							(:sfid, NULL, 1, :content, 1)',
 						array( 
 							':sfid'=>$subForums[$i]['sfid'],
 							':content'=>$postForum[0]['content']				

@@ -64,7 +64,7 @@ class Grouping {
 	// Define configuration page for grouping type
 	function configGrouping($f3){
 		
-		// Sanitise forum id on address bar
+		// Sanitise grouping method on address bar
 		$method = $f3->get('PARAMS.method');
 		$method = $f3->scrub($method);
 		
@@ -73,7 +73,7 @@ class Grouping {
 		
 		// Find appropriate config view for grouping type
 		$plugin = 'grouptypes\\'.$method;
-		echo Template::instance()->render( $plugin::getConfigView() );
+		echo Template::instance()->render( $plugin::getConfigView($f3) );
 
 	}
 	

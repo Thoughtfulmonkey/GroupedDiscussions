@@ -17,7 +17,7 @@
 	<check if="{{ @mode=='edit' }}"><true><check if="{{ @forumData[0].allow_peeking }}"><true>checked="checked"</true></check></true></check>
 >Allow peeking 
 <input class="group_option" type="radio" name="peeking" value="prevent" 
-	<check if="{{ @mode=='edit' }}"><true><check if="{{ !@forumData[0].allow_peeking }}"><true>checked="checked"</true></check></true></check>
+	<check if="{{ @mode=='edit' }}"><true><check if="{{ !@forumData[0].allow_peeking }}"><true>checked="checked"</true></check></true><false>checked="checked"</false></check>
 >No peeking<br>
 <br>
 

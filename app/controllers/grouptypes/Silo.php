@@ -7,7 +7,7 @@ class Silo {
 	const TYPE_ID = 1;
 	
 	// Returns address of view to handle grouping type configuration
-	public static function getConfigView(){
+	public static function getConfigView($f3){
 		return('app/views/configsilo.php');
 	}
 	

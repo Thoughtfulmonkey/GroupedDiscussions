@@ -7,7 +7,7 @@ class None {
 	const TYPE_ID = 0;
 	
 	// Returns address of view to handle grouping type configuration
-	public static function getConfigView(){
+	public static function getConfigView($f3){
 		return('app/views/confignone.php');
 	}
 	
