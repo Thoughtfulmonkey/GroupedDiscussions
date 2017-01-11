@@ -113,7 +113,6 @@ class Discussions {
 				':uid'=>$f3->get('SESSION.uid')
 			)
 		));
-
 		
 		// Yes, they are a member of this forum already  - slightly weird to set subindex (maybe confused at the time)
 		if ( count($f3->get('subindex')) == 1 ){
@@ -122,22 +121,9 @@ class Discussions {
 			$this->displaysubforum( $f3, $f3->get('subindex')[0]["sfid"], false);
 		}
 		else if ( count($f3->get('subindex')) == 0 ){
-				
-			// No, Determine the grouping type
-			$forum = $f3->get('DB')->exec('
-				SELECT * 
-				FROM `forum_meta` 
-					INNER JOIN `groupings` ON `forum_meta`.`grouptype` = `groupings`.`id` 
-				WHERE 
-					`forum_meta`.`fid` = :fid ',
-				array( ':fid'=>$forum[0]['fid'] )
-			);
 			
-			// Assign to a sub-forum as required
-			$addedTo = Grouping::addToGroup($f3, $forum);
-			
-			// Display the sub-forum
-			$this->displaysubforum($f3, $addedTo, false);
+			// Re-route to the joining URL
+			$f3->reroute( '/discussion/'.$forum[0]['publicId'].'/join/' );
 		}
 		else {
 
@@ -147,6 +133,60 @@ class Discussions {
 		}
 		
 	}
+	
+	
+	// User joining a discussion forum
+	function join($f3){
+		
+		// Is the user a member of this forum (search for sub-forum index)
+		//  not too efficient since redirected here from discussionRedirect (which includes membership test)
+		//  TODO: maybe an internal route with flag to bypass check
+		$userSearch = $f3->get('DB')->exec('
+			SELECT `sub_forum`.`sfid`, `sub_forum`.`publicId` 
+			FROM `user` 
+				INNER JOIN `membership` ON `user`.`uid` = `membership`.`uid` 
+				INNER JOIN `sub_forum` ON `membership`.`sfid` = `sub_forum`.`sfid` 
+			WHERE 
+				`sub_forum`.`fid` = :fid 
+				AND `user`.`uid` = :uid',
+			array( 
+				':fid'=>$forum[0]['fid'], 
+				':uid'=>$f3->get('SESSION.uid')
+			)
+		);
+		
+		// Get grouping option for chosen forum
+		$forum = $f3->get('DB')->exec('
+			SELECT * 
+			FROM `forum_meta` 
+				INNER JOIN `groupings` ON `forum_meta`.`grouptype` = `groupings`.`id` 
+			WHERE 
+				`forum_meta`.`publicId` = :publicId ',
+			array( ':publicId'=>$f3->get('PARAMS.fid') )
+		);
+		
+		if ( count($userSearch) != 1 ){
+			
+			// Assign to a sub-forum as required
+			// TODO: shouldn't pass in array, should be $forum[0]
+			$addedTo = Grouping::addToGroup($f3, $forum);
+		
+			// TODO: -1 for error?
+			if ($addedTo != null){
+				
+				// Display the sub-forum
+				// This will cause the third check for membership of a forum
+				// - very inefficient
+				$f3->reroute( '/discussion/'.$forum[0]['publicId'] );
+			}
+			
+		} else {
+			
+			// Display the sub-forum that they are a member of
+			$this->displaysubforum( $f3, $userSearch[0]["sfid"], false);
+		}
+	}
+	
 	
 	// Find all posts for chosen sub-forum and pass to view
 	function displaysubforum($f3, $index, $peek){

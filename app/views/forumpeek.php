@@ -43,7 +43,7 @@
 	<div id="discussion_list">
 
 			<repeat group="{{ @subforumposts }}" value="{{ @post }}">
-				<div class="post" id="pst_{{ @post.pid }}" data-parent="{{ @post.parent }}">
+				<div class="post" id="pst_{{ @post.publicId }}" data-parent="{{ @post.parent }}">
 					<div class="post_head">
 						<div class="post_author">{{ @post.username  }}</div>
 						<div class="post_date">{{ @post.created }}</div>

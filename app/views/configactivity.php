@@ -70,14 +70,14 @@
 					<input type="hidden" name="grouping" value="activity">
 					<input type="hidden" name="sourceForum" value="{{ @POST.sourceForum }}">
 					
-					<label for="min">Minimum group size</label>
+					<label for="min">Minimum group size:</label>
 					<input name="min" type="text" 
 						<check if="{{ @mode=='edit' }}">
 							<true> value="{{ @groupingData[0].min }}" </true>
 						</check>
-					><br>
+					><br><br>
 					
-					<label for="max">Maximum group size</label>
+					<label for="max">Maximum group size:</label>
 					<input name="max" type="text" 
 						<check if="{{ @mode=='edit' }}">
 							<true> value="{{ @groupingData[0].max }}" </true>
@@ -97,14 +97,14 @@
 					</check>
 					<br>
 					
-					<label for="postCut">Posts cut-off</label>
+					<label for="postCut">Posts cut-off:</label>
 					<input name="postCut" type="text" 
 						<check if="{{ @mode=='edit' }}">
 							<true> value="{{ @groupingData[0].postCut }}" </true>
 						</check>
-					><br>
+					><br><br>
 					
-					<label for="lengthCut">Length cut-off</label>
+					<label for="lengthCut">Length cut-off:</label>
 					<input name="lengthCut" type="text" 
 						<check if="{{ @mode=='edit' }}">
 							<true> value="{{ @groupingData[0].lengthCut }}" </true>

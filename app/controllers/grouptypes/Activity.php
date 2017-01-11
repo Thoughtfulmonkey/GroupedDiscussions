@@ -91,13 +91,12 @@ class Activity {
 		// Store grouping config settings
 		$f3->get('DB')->exec('
 			INSERT INTO `grouping_activity`
-				(`max`, `min`, `fid`, `lengthCut`, `postCut`)
+				(`max`, `min`, `lengthCut`, `postCut`)
 			VALUES
-				(:max, :min, :fid, :lengthCut, :postCut)',
+				(:max, :min, :lengthCut, :postCut)',
 			array( 
 				':max'=>$f3->get('POST.max'),
 				':min'=>$f3->get('POST.min'),
-				':fid'=>$forum[0]['fid'],
 				':lengthCut'=>$f3->get('POST.lengthCut'),
 				':postCut'=>$f3->get('POST.postCut')
 			)
@@ -138,7 +137,7 @@ class Activity {
 				`sub_forum`.`fid` = :fid
 			GROUP BY (`author`)',
 			array( 
-				':fid'=>$f3->get('groupingData')[0]['fid']
+				':fid'=>$f3->get('forumData')[0]['fid']
 			)
 		);
 

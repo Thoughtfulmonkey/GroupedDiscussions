@@ -42,9 +42,11 @@ $f3->route('GET /logout', 'MyAuth->logout');		// Log the user out
 $f3->route('POST /lti', 'MyAuth->lti');				// Accept an LTI request
 
 // Discussion
-$f3->route('GET /discussion', 'Discussions->listall');						// Discussion root 
-$f3->route('GET /discussion/@fid', 'Discussions->land');					// Display a discussion
-$f3->route('POST /discussion/@fid', 'Discussions->addreply');				// add a reply to a post
+$f3->route('GET /discussion', 'Discussions->listall');							// Discussion root 
+$f3->route('GET /discussion/@fid', 'Discussions->land');						// Display a discussion
+$f3->route('GET /discussion/@fid/join', 'Discussions->join');					// Direct route to join a discussion
+$f3->route('POST /discussion/@fid/join', 'Discussions->join');					// Allow posting when joining a discussion
+$f3->route('POST /discussion/@fid', 'Discussions->addreply');					// add a reply to a post
 $f3->route('GET /discussion/@fid/@sfid', 'Discussions->subForumDirect'); 		// Directly access a sub-forum (admin only at this point)
 $f3->route('POST /discussion/@fid/@sfid', 'Discussions->subForumPostDirect'); 	// Directly post to a sub-forum (admin only at this point)
 

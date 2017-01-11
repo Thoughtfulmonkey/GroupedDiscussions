@@ -13,6 +13,14 @@ body{
 	overflow: auto;
 }
 
+#form_panel{
+	width: 500px;
+	margin: 0 auto;
+	margin-top: 50px;
+	padding: 15px;
+	border: 1px solid #ccc;
+}
+
 form input{
 	font-family: Open Sans; 
 	font-size: 18px;
@@ -33,6 +41,31 @@ form input:hover{
 	background-color: #eee;
 }
 
+#new_form input[type="text"]{
+	width: 490px;
+}
+
+#new_form .appended_input{
+	width: 400px !important;
+}
+
+#new_form .append_button{
+	width: 85px;
+	padding: 1px;
+	display: inline-block;
+	text-align: center;
+	border: 1px solid #ccc;
+	cursor: pointer;
+}
+
+#new_form .positive{
+	background-color: #dfd; 
+}
+
+#new_form .negative{
+	background-color: #fdd;
+}
+
 /* Standard header */
 #logged_in{
 	float: left;
@@ -43,6 +76,11 @@ form input:hover{
 }
 #logout a{
 	color: #fff;
+}
+
+.big_select{
+	width: 490px;
+	font-size: 18px;
 }
 
 /* Login screen */

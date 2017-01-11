@@ -9,13 +9,7 @@
 		
 	</script>
 	<style>
-		#form_panel{
-			width: 500px;
-			margin: 0 auto;
-			margin-top: 50px;
-			padding: 15px;
-			border: 1px solid #ccc;
-		}
+
 	</style>
 </head>
 
@@ -41,7 +35,6 @@
 			
 			<include href="app/views/discussionformcommon.php" />
 			
-			<br>
 			
 			<check if="{{ @mode=='edit' }}">
 				<true> <br><input type="submit" value="Update"> </true>

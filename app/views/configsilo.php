@@ -9,13 +9,7 @@
 		
 	</script>
 	<style>
-		#form_panel{
-			width: 500px;
-			margin: 0 auto;
-			margin-top: 50px;
-			padding: 15px;
-			border: 1px solid #ccc;
-		}
+
 	</style>
 </head>
 
@@ -43,14 +37,14 @@
 			
 			<input type="hidden" name="grouping" value="silo">
 			
-			<label for="min">Minimum group size</label>
+			<label for="min">Minimum group size:</label><br>
 			<input name="min" type="text" 
 				<check if="{{ @mode=='edit' }}">
 					<true> value="{{ @groupingData[0].min }}" </true>
 				</check>
 			><br><br>
 			
-			<label for="max">Maximum group size</label>
+			<label for="max">Maximum group size:</label><br>
 			<input name="max" type="text" 
 				<check if="{{ @mode=='edit' }}">
 					<true> value="{{ @groupingData[0].max }}" </true>
